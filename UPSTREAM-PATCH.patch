@@ -1,0 +1,364 @@
+From 0114bcb47c18172991d1b87606f1bd475056de56 Mon Sep 17 00:00:00 2001
+From: huhu233 <925393268@qq.com>
+Date: Fri, 9 Oct 2026 00:31:47 +0800
+Subject: [PATCH] feat(ui-subagent): show the model route each subagent ran on
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The catalog reported a child's mode, activity, usage, and duration but
+never which model it actually ran on, so a delegation that pinned a
+route was indistinguishable from one that inherited the parent's.
+
+Rows now stack three lines — the child's name, a badge line carrying
+mode, activity, and the route, and the log-backed title — which also
+stops an over-long title from ellipsizing the badges away. A child
+session's own header carries the same readout beside its breadcrumb
+switcher, gated to the child sessions that renderer already owns.
+
+The route comes from the existing durable `modelSelection` projection,
+which already records the provider, model, and reasoning effort of each
+`request/header`. Catalog rows read it from the summary's projection
+values they already load for token usage and timing, so this adds no
+RPC, no host surface, and no new slot.
+---
+ packages/client/ui-subagent/README.i18n.yaml  |  8 +--
+ packages/client/ui-subagent/README.md         |  4 +-
+ packages/client/ui-subagent/README.zh.md      |  4 +-
+ .../client/SubagentHeaderLineage.module.css   | 45 ++++++++++++++++
+ .../src/client/SubagentHeaderLineage.tsx      | 54 +++++++++++++++++--
+ .../client/ui-subagent/src/client/locales.ts  |  2 +
+ .../tests/conversation-ui.client.spec.tsx     | 46 +++++++++++++++-
+ 7 files changed, 149 insertions(+), 14 deletions(-)
+
+diff --git a/packages/client/ui-subagent/README.i18n.yaml b/packages/client/ui-subagent/README.i18n.yaml
+index 646813b0a8..116bde0137 100644
+--- a/packages/client/ui-subagent/README.i18n.yaml
++++ b/packages/client/ui-subagent/README.i18n.yaml
+@@ -9,8 +9,8 @@
+   en: 930db612ece65ad4
+   zh: ad7e9d9afb4545ac
+ /deepseek-ai-dsh-client-ui-subagent/summary:
+-  en: 50f267d55833a683
+-  zh: 89d6b827576baa8b
++  en: 8b00d84c7ce7f841
++  zh: 2b6329864dc31d27
+ /deepseek-ai-dsh-client-ui-subagent/table-of-contents:
+   en: d152484eb41ac6b4
+   zh: 09388d293f9be9cb
+@@ -18,8 +18,8 @@
+   en: 06f6bac3153361f5
+   zh: e8b23941cbd16036
+ /deepseek-ai-dsh-client-ui-subagent/use-this-package/browsing-the-tree:
+-  en: 3508631091820123
+-  zh: ec7da9e5bedb22ba
++  en: c3b4dba7cedb0363
++  zh: 56178f6293d9ea88
+ /deepseek-ai-dsh-client-ui-subagent/use-this-package/continuing-a-conversation:
+   en: 876e7152c8b9c4a6
+   zh: f89f5e2a812e8451
+diff --git a/packages/client/ui-subagent/README.md b/packages/client/ui-subagent/README.md
+index f648a3e345..b188fdd9a7 100644
+--- a/packages/client/ui-subagent/README.md
++++ b/packages/client/ui-subagent/README.md
+@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
+ 
+ ## Summary
+ 
+-Use this package to browse every subagent conversation beneath a parent session, open any descendant, and see whether it is running together with its token usage and active-turn duration. Completed one-shot conversations open as read-only execution records. Continuable conversations accept follow-up prompts in submission order while they run and provide Stop independently. The ordinary session sidebar omits subagent conversations, so the parent header catalog is their navigation entry point. The separate `@` source inserts a running child's label into a user message without resolving it into a continuation address.
++Use this package to browse every subagent conversation beneath a parent session, open any descendant, and see whether it is running together with the model route it ran on, its token usage, and active-turn duration. Completed one-shot conversations open as read-only execution records. Continuable conversations accept follow-up prompts in submission order while they run and provide Stop independently. The ordinary session sidebar omits subagent conversations, so the parent header catalog is their navigation entry point. The separate `@` source inserts a running child's label into a user message without resolving it into a continuation address.
+ 
+ ## Table of Contents
+ 
+@@ -33,7 +33,7 @@ This package registers the `dsh-resource://subagentchat/session/<child>?parent=<
+ 
+ Hovering a trigger opens its catalog after 150ms; leaving both trigger and catalog closes it after 120ms. Clicking the descendant-count trigger pins its catalog until outside click or Escape from the trigger or tree. Breadcrumb-title clicks navigate to the corresponding conversation.
+ 
+-Rows display mode plus activity and an optional log-backed title; running uses the shared ongoing loader, an inactive child whose latest closed turn completed normally uses the shared success dot, and other inactive children use the shared idle dot. Every row reserves the same 14px status column, centering smaller dots so titles align with the loader state. The compact header trigger vertically centers its activity glyph and count with a 4px gap. The trailing column stacks total durable provider usage above active-turn duration. Keyboard navigation works with ArrowRight/ArrowLeft to expand and collapse branches and ArrowUp/ArrowDown, Home, End, and Escape to navigate or close the tree. An unlabeled one-shot row falls back to its session id. A row is a known leaf only after its own catalog loads empty.
++Rows stack three lines: the child's name, a badge line carrying mode, activity, and the model route the child last ran on, and an optional log-backed title; running uses the shared ongoing loader, an inactive child whose latest closed turn completed normally uses the shared success dot, and other inactive children use the shared idle dot. Every row reserves the same 14px status column, centering smaller dots so names align with the loader state. The compact header trigger vertically centers its activity glyph and count with a 4px gap. The route badge reads the child's durable `modelSelection` projection and carries the provider and reasoning effort in its tooltip; a child that never issued a request shows no badge, and the same readout renders beside the breadcrumb switcher in a child session's own header. The trailing column stacks total durable provider usage above active-turn duration. Keyboard navigation works with ArrowRight/ArrowLeft to expand and collapse branches and ArrowUp/ArrowDown, Home, End, and Escape to navigate or close the tree. An unlabeled one-shot row falls back to its session id. A row is a known leaf only after its own catalog loads empty.
+ 
+ ### Continuing a conversation
+ 
+diff --git a/packages/client/ui-subagent/README.zh.md b/packages/client/ui-subagent/README.zh.md
+index 8716960c61..700caf405d 100644
+--- a/packages/client/ui-subagent/README.zh.md
++++ b/packages/client/ui-subagent/README.zh.md
+@@ -9,7 +9,7 @@ kind: "package-reference"
+ 
+ ## 概述
+ 
+-使用本包可浏览父会话下的每个 subagent 对话、打开任意后代，并查看其是否正在运行以及 token 用量和活跃轮次耗时。已完成的 one-shot 对话会作为只读执行记录打开。可继续对话在运行期间按提交顺序接收后续提示词，并独立提供 Stop。普通会话侧边栏会省略 subagent 对话，因此父会话页头目录是它们的导航入口。独立的 `@` source 会把运行中 child 的 label 插入用户消息，但不会把它解析成继续执行地址。
++使用本包可浏览父会话下的每个 subagent 对话、打开任意后代，并查看其是否正在运行、实际跑在哪个模型上，以及 token 用量和活跃轮次耗时。已完成的 one-shot 对话会作为只读执行记录打开。可继续对话在运行期间按提交顺序接收后续提示词，并独立提供 Stop。普通会话侧边栏会省略 subagent 对话，因此父会话页头目录是它们的导航入口。独立的 `@` source 会把运行中 child 的 label 插入用户消息，但不会把它解析成继续执行地址。
+ 
+ ## 目录
+ 
+@@ -33,7 +33,7 @@ kind: "package-reference"
+ 
+ 悬停触发器 150ms 后打开目录；指针离开触发器和目录后，经过 120ms 关闭。点击后代数量触发器会固定目录，直到点击外部，或在触发器或树内按 Escape 关闭。点击面包屑标题会导航至对应会话。
+ 
+-行显示 mode、活动状态与由日志支撑的可选 title；running 使用共享 ongoing loading，最近一个已结束轮次正常完成的 inactive child 使用共享 success 绿点，其他 inactive child 使用共享 idle 灰点。每行都为状态图标预留相同的 14px 列宽，并将较小的圆点居中，使 title 与 loading 状态对齐。紧凑的页头触发器会垂直居中活动图标与数量，并保留 4px 水平间距。尾随列在上行显示提供方的持久化 token 用量总计，在下行显示活跃轮次耗时。键盘导航：ArrowRight/ArrowLeft 展开和折叠分支；ArrowUp/ArrowDown、Home、End 与 Escape 用于导航或关闭树。没有 label 的 one-shot 行回退到其会话 id。只有一行自身的目录加载为空后，它才是已知叶子。
++行分三行堆叠：child 名称、承载 mode/活动状态/实际运行模型的徽标行，以及由日志支撑的可选 title；running 使用共享 ongoing loading，最近一个已结束轮次正常完成的 inactive child 使用共享 success 绿点，其他 inactive child 使用共享 idle 灰点。每行都为状态图标预留相同的 14px 列宽，并将较小的圆点居中，使名称与 loading 状态对齐。紧凑的页头触发器会垂直居中活动图标与数量，并保留 4px 水平间距。模型徽标读取 child 的持久化 `modelSelection` 投影，并在悬停提示中给出提供方与推理强度；从未发出请求的 child 不显示徽标，同一读数也会渲染在 child 会话自身页头的面包屑切换器旁。尾随列在上行显示提供方的持久化 token 用量总计，在下行显示活跃轮次耗时。键盘导航：ArrowRight/ArrowLeft 展开和折叠分支；ArrowUp/ArrowDown、Home、End 与 Escape 用于导航或关闭树。没有 label 的 one-shot 行回退到其会话 id。只有一行自身的目录加载为空后，它才是已知叶子。
+ 
+ ### 续接对话
+ 
+diff --git a/packages/client/ui-subagent/src/client/SubagentHeaderLineage.module.css b/packages/client/ui-subagent/src/client/SubagentHeaderLineage.module.css
+index 19e1378313..faf51d39e8 100644
+--- a/packages/client/ui-subagent/src/client/SubagentHeaderLineage.module.css
++++ b/packages/client/ui-subagent/src/client/SubagentHeaderLineage.module.css
+@@ -222,6 +222,11 @@
+   min-width: 0;
+ }
+ 
++/*
++ * Three stacked lines per row — name, mode/activity/route badges, then the long
++ * session summary. Each line owns its own width, so no line can ellipsize
++ * another one's content away.
++ */
+ .label,
+ .summary {
+   overflow: hidden;
+@@ -230,10 +235,32 @@
+ }
+ 
+ .label {
++  flex: none;
++  min-width: 0;
+   color: inherit;
+   font-weight: 400;
+ }
+ 
++.badges {
++  display: inline-flex;
++  flex: none;
++  align-items: center;
++  gap: 4px;
++  white-space: nowrap;
++}
++
++.badge {
++  flex: none;
++  color: var(--dsw-alias-label-tertiary);
++  font-size: 10px;
++  line-height: 15px;
++}
++
++/* Keep the summary line's height even when a session has no title yet. */
++.summary {
++  min-height: 15px;
++}
++
+ .currentLabel {
+   font-weight: 600;
+ }
+@@ -263,6 +290,24 @@
+   grid-row: 2;
+ }
+ 
++.model {
++  color: var(--dsw-alias-label-secondary);
++  font-family: var(--ds-font-family-code, ui-monospace, monospace);
++}
++
++.sessionModel {
++  display: inline-block;
++  flex: none;
++  max-width: 180px;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++  color: var(--dsw-alias-label-tertiary);
++  font-family: var(--ds-font-family-code, ui-monospace, monospace);
++  font-size: 12px;
++  line-height: 18px;
++}
++
+ .sidebarButton {
+   display: inline-flex;
+   flex: none;
+diff --git a/packages/client/ui-subagent/src/client/SubagentHeaderLineage.tsx b/packages/client/ui-subagent/src/client/SubagentHeaderLineage.tsx
+index cca800677c..fa50654da2 100644
+--- a/packages/client/ui-subagent/src/client/SubagentHeaderLineage.tsx
++++ b/packages/client/ui-subagent/src/client/SubagentHeaderLineage.tsx
+@@ -73,6 +73,31 @@ function tokenTotal(
+       + usage.cacheReadTokens + usage.cacheWriteTokens
+ }
+ 
++/** One session's actually-used model route, from its durable modelSelection projection. */
++type SessionModelRef = NonNullable<SessionProjectionMap['modelSelection']['lastUsed']>
++
++/**
++ * The route a session ran on: the last request header wins over pending intent.
++ * @param selection - the session's `modelSelection` projection value, when known.
++ * @returns the used route, or undefined before the session makes its first request.
++ */
++function usedModel(
++  selection: SessionProjectionMap['modelSelection'] | undefined,
++): SessionModelRef | undefined {
++  return selection?.lastUsed ?? selection?.next ?? undefined
++}
++
++/**
++ * Full route readout for a model tooltip, e.g. "openai/gpt-5.6-sol · high".
++ * @param readout - the resolved route plus its optional reasoning effort.
++ * @returns the provider-qualified route in one line.
++ */
++function modelRoute(readout: SessionModelRef): string {
++  return readout.reasoningEffort === undefined
++    ? `${readout.provider}/${readout.model}`
++    : `${readout.provider}/${readout.model} · ${readout.reasoningEffort}`
++}
++
+ /** Exact whole-second active-turn duration for one catalog row. */
+ function activityDuration(
+   summary: SessionSummary | undefined,
+@@ -247,9 +272,14 @@ function CatalogRows({
+           : completed
+             ? t('activity.completed')
+             : t('activity.inactive')
+-        const secondary = [summary?.title, mode, activity]
+-          .filter(value => value !== undefined)
+-          .join(' · ')
++        // The long host-computed title owns the second line alone. Mode, activity
++        // and the route ride the headline as non-shrinking badges, so a long
++        // summary can no longer ellipsize the model away.
++        const secondary = summary?.title ?? ''
++        const model = usedModel(summary?.projectionValues?.modelSelection)
++        const modelTitle = model === undefined
++          ? undefined
++          : t('model.title', { value: modelRoute(model) })
+         const totalTokens = tokenTotal(summary?.projectionValues?.tokenUsage)
+         const durationMs = activityDuration(
+           summary,
+@@ -310,7 +340,9 @@ function CatalogRows({
+               tabIndex={0}
+               aria-level={level}
+               aria-current={isCurrent || undefined}
+-              aria-label={[label, secondary, metrics].filter(value => value !== '').join(' ')}
++              aria-label={[label, mode, activity, secondary, modelTitle ?? '', metrics]
++                .filter(value => value !== '')
++                .join(' ')}
+               {...knownLeaf ? {} : { 'aria-expanded': isExpanded }}
+               className={css.row}
+               onClick={open}
+@@ -335,6 +367,13 @@ function CatalogRows({
+                 </span>
+                 <span className={css.content}>
+                   <span className={`${css.label} ${isCurrent ? css.currentLabel : ''}`}>{label}</span>
++                  <span className={css.badges}>
++                    <span className={css.badge}>{mode}</span>
++                    <span className={css.badge}>{activity}</span>
++                    {model !== undefined && (
++                      <span className={`${css.badge} ${css.model}`} title={modelTitle}>{model.model}</span>
++                    )}
++                  </span>
+                   <span className={css.summary}>{secondary}</span>
+                 </span>
+                 {metrics !== '' && (
+@@ -779,6 +818,10 @@ export function SubagentHeaderLineage({
+     return undefined
+   })
+   const shared = { useSessions, useSessionStatus, openChild, openChildAside, refreshProjection, t }
++  // Child sessions are the surface this component owns, so the route readout below
++  // rides the same gate: root sessions still render no breadcrumb and no model.
++  const model = usedModel(useSessions(state => state.byId[lineageSessionId]?.projectionValues?.modelSelection))
++  const modelTitle = model === undefined ? undefined : t('model.title', { value: modelRoute(model) })
+   // Root sessions carry no breadcrumb; their descendant count lives in the
+   // header actions band (SubagentCatalogAction).
+   if (parentId === undefined) return null
+@@ -801,6 +844,9 @@ export function SubagentHeaderLineage({
+           {...shared}
+         />
+       )}
++      {model !== undefined && (
++        <span className={css.sessionModel} title={modelTitle}>{model.model}</span>
++      )}
+     </>
+   )
+ }
+diff --git a/packages/client/ui-subagent/src/client/locales.ts b/packages/client/ui-subagent/src/client/locales.ts
+index 305e74e248..9a52db8c9b 100644
+--- a/packages/client/ui-subagent/src/client/locales.ts
++++ b/packages/client/ui-subagent/src/client/locales.ts
+@@ -19,6 +19,7 @@ export const zh = {
+   'tokens.thousand': '{value}K',
+   'tokens.million': '{value}M',
+   'tokens.total': '{value} tok',
++  'model.title': '实际使用模型：{value}',
+   'loading.label': '正在加载子智能体…',
+   'load.error': '无法加载子智能体',
+   'retry': '重试',
+@@ -62,6 +63,7 @@ export const en: Record<SubagentKey, string> = {
+   'tokens.thousand': '{value}K',
+   'tokens.million': '{value}M',
+   'tokens.total': '{value} tok',
++  'model.title': 'Model used: {value}',
+   'loading.label': 'Loading subagents…',
+   'load.error': 'Unable to load subagents',
+   'retry': 'Retry',
+diff --git a/packages/client/ui-subagent/tests/conversation-ui.client.spec.tsx b/packages/client/ui-subagent/tests/conversation-ui.client.spec.tsx
+index 0c36c8a1c4..84e0659ff0 100644
+--- a/packages/client/ui-subagent/tests/conversation-ui.client.spec.tsx
++++ b/packages/client/ui-subagent/tests/conversation-ui.client.spec.tsx
+@@ -249,8 +249,12 @@ describe('SubagentHeaderLineage', () => {
+ 
+     expect(input.refreshProjection).not.toHaveBeenCalled()
+     expect(screen.getAllByRole('treeitem')).toHaveLength(2)
+-    expect(screen.getByText('正在扫描项目文件 · 可继续 · 正在运行')).toBeTruthy()
+-    expect(screen.getByText('一次性 · 当前未运行')).toBeTruthy()
++    // The durable title owns the summary line; mode and activity are its own badges.
++    expect(screen.getByText('正在扫描项目文件')).toBeTruthy()
++    expect(screen.getByText('可继续')).toBeTruthy()
++    expect(screen.getByText('正在运行')).toBeTruthy()
++    expect(screen.getByText('一次性')).toBeTruthy()
++    expect(screen.getByText('当前未运行')).toBeTruthy()
+     expect(screen.getByRole('button', { name: '展开 worker 的下级子智能体' })).toBeTruthy()
+     expect(screen.getByRole('button', { name: '展开 reviewer 的下级子智能体' })).toBeTruthy()
+ 
+@@ -270,6 +274,44 @@ describe('SubagentHeaderLineage', () => {
+     })
+   })
+ 
++  it('annotates catalog rows and a child header with the route the session ran on', () => {
++    const route = { provider: 'openai', model: 'gpt-6-astra' }
++    const summaries: Readonly<Record<SessionId, SessionSummary>> = {
++      [CHILD]: {
++        ...summary(CHILD, 1), parentId: PARENT, origin: 'subagent', running: true,
++        title: '正在扫描项目文件',
++        projectionValues: { modelSelection: { lastUsed: route, next: route } },
++      },
++      // A child that has not issued a request yet carries no modelSelection.
++      ['child-2' as SessionId]: {
++        ...summary('child-2' as SessionId, 1), parentId: PARENT, origin: 'subagent',
++        title: '检查依赖升级',
++      },
++    }
++
++    // Catalog rows: the route rides its own badge line, so an over-long summary
++    // title can no longer ellipsize it away.
++    render(<HeaderCatalog {...props(catalog(), {}, summaries)} />)
++    hoverCatalog(screen.getByRole('button', { name: /1 个子智能体，正在运行/ }))
++    const workerRow = screen.getByRole('treeitem', { name: /worker/ })
++    expect(within(workerRow).getByText('正在扫描项目文件')).toBeTruthy()
++    expect(within(workerRow).getByText('gpt-6-astra').getAttribute('title'))
++      .toBe('实际使用模型：openai/gpt-6-astra')
++    expect(within(screen.getByRole('treeitem', { name: /reviewer/ })).queryByTitle(/实际使用模型/))
++      .toBeNull()
++    cleanup()
++
++    // Child session header: the same readout, gated to the child sessions this
++    // component owns (root sessions keep rendering nothing).
++    const header = {
++      ...props(undefined, {}, summaries, { parentSessionId: PARENT, childSessionId: CHILD, mode: 'continuable' }),
++      lineageSessionId: CHILD,
++    }
++    render(<HeaderCatalog {...header} />)
++    expect(screen.getByText('gpt-6-astra').getAttribute('title'))
++      .toBe('实际使用模型：openai/gpt-6-astra')
++  })
++
+   it('selects singular count keys for one direct child', () => {
+     const base = props(catalog({
+       entries: [{
+-- 
+2.34.1
+

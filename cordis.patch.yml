@@ -1,0 +1,8 @@
+# Inserts this plugin's own entry. Mount the package as a profile bundle (list it
+# in `dsh.profile.bundles`) or through `dsh plugin add`, so the Loader applies this
+# patch after the base bundle that ships @deepseek-ai/dsh-client-ui-subagent —
+# this plugin shadows that package's two catalog occupants by priority, so it
+# must activate on top of it.
+- insert:
+    - id: subagent-model-route
+      name: dsh-plugin-subagent-model-route
