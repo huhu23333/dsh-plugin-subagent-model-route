@@ -104,7 +104,7 @@ commit（`github:you/repo#<sha>`）。**若不想让用户授权，就分发构�
 而本机运行的 DSH 是 `0.2.1-alpha.1`。**也就是说：写 `"@deepseek-ai/dsh-subagent": "^0.1.7-rc.1"`
 这类范围，在 registry 上根本不存在对应版本 —— 正是上面那 68 条的成因。**
 
-### 3.2 本插件的三条规避
+### 3.2 本插件的规避
 
 1. **`peerDependencies` 里 `@deepseek-ai/*` 用 `*`**（宿主的安装提供真实实例），避免「版本不存在」。
 2. **`devDependencies` 只列真正发布在 npm 上的包**：`tsdown`、`lightningcss`、`typescript`、
@@ -113,10 +113,26 @@ commit（`github:you/repo#<sha>`）。**若不想让用户授权，就分发构�
 3. **构建只需 `tsdown` + `lightningcss`，不解析任何 `@deepseek-ai/*`**（它们在 bundle 里是 external）。
    这一点我已**实证**：把 `node_modules/@deepseek-ai`、`react`、`react-dom` 全部移开后，
    `tsdown` 依然成功产出 `lib/index.js` 与 `lib/client/index.js`。
+4. **`peerDependenciesMeta` 把 `@deepseek-ai/*` 全部标 `optional: true`** —— 见 3.3，这是实测必需的一条。
 
    > 代价：`npm run typecheck` 需要 `@deepseek-ai/*` 的类型，因此它只在「有 harness checkout 或已安装
    > 宿主依赖」的环境里可跑。`prepare` / `prepublishOnly` **刻意不包含 typecheck**，只做构建与冒烟。
    > 这是与官方 2.3 节建议的有意偏离，理由就是上面的 63 条失败。
+
+### 3.3 实测抓到的坑：peer 自动安装导致 ERESOLVE
+
+DSH profile 通过 `pnpm-workspace.yaml` 的 **`autoInstallPeers: false`** 让 peer 永不被自动抓取 —— 所以
+`dsh plugin add` 装进 DSH 是安全的。但**普通 `npm install`（贡献者克隆仓库、或目录审计方的干净环境）默认会自动安装
+peer**，于是它去抓那些 `0.0.1-rc.1` 占位包，而占位包自己的 peer 图是坏的，导致：
+
+```
+npm error Could not resolve dependency:
+npm error peer @deepseek-ai/dsh-client-connection@"^0.0.1-rc.1" from @deepseek-ai/dsh-client-locale@0.0.1-rc.1
+```
+
+把宿主提供的 `@deepseek-ai/*` 在 `peerDependenciesMeta` 里标 `optional: true` 后，npm 不再抓取它们，安装恢复。
+**这条是在 `/tmp` 里从 GitHub 全新克隆后 `npm install` 实测抓到并修复的**：修前 ERESOLVE 失败，修后
+98 个包 19 秒装完、`prepare` 自动构建出 `lib/`、冒烟 15/15 全过。
 
 ---
 

@@ -1,5 +1,7 @@
 # dsh-plugin-subagent-model-route
 
+English | [中文](README.zh.md)
+
 Annotate every subagent with the **model route it actually ran on**, in both places you look
 at a subagent: the parent's catalog list and the child session's own header.
 

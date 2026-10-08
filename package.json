@@ -74,11 +74,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CHANGE-ME/dsh-plugin-subagent-model-route.git"
+    "url": "git+https://github.com/huhu23333/dsh-plugin-subagent-model-route.git"
   },
-  "homepage": "https://github.com/CHANGE-ME/dsh-plugin-subagent-model-route#readme",
+  "homepage": "https://github.com/huhu23333/dsh-plugin-subagent-model-route#readme",
   "bugs": {
-    "url": "https://github.com/CHANGE-ME/dsh-plugin-subagent-model-route/issues"
+    "url": "https://github.com/huhu23333/dsh-plugin-subagent-model-route/issues"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
@@ -94,6 +94,19 @@
     "@deepseek-ai/dsh-subagent": "*",
     "react": ">=18",
     "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": { "optional": true },
+    "@deepseek-ai/dsh-api-session-controller": { "optional": true },
+    "@deepseek-ai/dsh-client-locale": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-conversation": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-primitives": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-session": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-sidebar-right": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-slots": { "optional": true },
+    "@deepseek-ai/dsh-client-ui-workspace": { "optional": true },
+    "@deepseek-ai/dsh-session": { "optional": true },
+    "@deepseek-ai/dsh-subagent": { "optional": true }
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

@@ -1,5 +1,7 @@
 # dsh-plugin-subagent-model-route
 
+[English](README.md) | 中文
+
 给每个子代理标注它**实际运行使用的模型路由**，覆盖你查看子代理时的两个位置：父会话的目录列表，以及子代理会话自身的页头。
 
 ![目录列表：每行依次堆叠名称、mode/活动状态/模型徽标行、持久化标题](docs/effect-catalog-rows.png)
