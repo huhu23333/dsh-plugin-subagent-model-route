@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2
+
+Show the whole route in both surfaces. The catalog badge and the child-session header chip now
+read `provider/model · reasoningEffort` instead of the bare model id, so the provider and the
+effort are legible without hovering. A route long enough to outgrow the badge line wraps onto
+its own line rather than being clipped.
+
+- `SubagentHeaderLineage.tsx`: both readouts render `modelRoute(model)`.
+- `SubagentHeaderLineage.module.css`: the badge line wraps (`flex-wrap`) for long routes, and
+  the child-session chip's cap doubles (180px → 360px) so the longer route is not ellipsized.
+- The tooltip still repeats the route under its label.
+
 ## 0.1.1
 
 Fix a bare `npm install dsh-plugin-subagent-model-route` failure. `react` and `react-dom`

@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-subagent-model-route",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Annotate every subagent with the model route it actually ran on: a badge line in each parent-catalog row and a readout in a child session's own header.",
   "license": "MIT",
@@ -31,6 +31,7 @@
     "watch": "tsdown --watch",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "smoke": "node scripts/smoke.mjs",
+    "preview": "node scripts/preview.mjs",
     "check": "npm run typecheck && npm run build && npm run smoke",
     "prepare": "tsdown",
     "prepublishOnly": "npm run build && npm run smoke"

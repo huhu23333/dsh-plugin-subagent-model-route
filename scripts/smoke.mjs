@@ -123,7 +123,7 @@ ok('shadows at priority -1 (the shipped occupants own 0, where a retry would thr
 const PARENT = 'parent'
 const CHILD = 'child'
 const REVIEWER = 'reviewer'
-const route = { provider: 'openai', model: 'gpt-6-astra' }
+const route = { provider: 'openai', model: 'gpt-6-astra', reasoningEffort: 'high' }
 const summary = (id, extra) => ({
   id, displayTitle: id, running: false, retainedBy: {}, blank: false, updatedAt: 1, ...extra,
 })
@@ -189,10 +189,13 @@ ok('row line 3 keeps the durable title (long summaries no longer squeeze the rou
 assert.match(workerRow.textContent, /可继续/)
 assert.match(workerRow.textContent, /正在运行/)
 ok('row line 2 carries the mode and activity badges')
-const badge = [...workerRow.querySelectorAll('span')].find((node) => node.textContent === 'gpt-6-astra')
-assert.ok(badge, 'the routed row shows its model on the badge line')
-assert.equal(badge.getAttribute('title'), '实际使用模型：openai/gpt-6-astra')
-ok('the model badge reads "gpt-6-astra" and titles the full provider route')
+// The badge spells out the provider and the reasoning effort, not just the model id.
+assert.match(workerRow.textContent, /openai\/gpt-6-astra · high/)
+ok('row line 2 shows provider, model, and reasoning effort')
+const badge = [...workerRow.querySelectorAll('span')].find((node) => node.textContent === 'openai/gpt-6-astra · high')
+assert.ok(badge, 'the routed row shows its route on the badge line')
+assert.equal(badge.getAttribute('title'), '实际使用模型：openai/gpt-6-astra · high')
+ok('the route badge shows "openai/gpt-6-astra · high" and titles the same route')
 assert.doesNotMatch(reviewerRow.textContent, /gpt-6-astra/)
 ok('a child with no request history shows no route badge')
 assert.match(workerRow.textContent, /1.5K tok/)
@@ -206,9 +209,9 @@ const lineageProps = {
   useSessions, useSession, useSessionStatus, t, ...injected,
 }
 const childHeader = render(React.createElement(lineage.component, lineageProps))
-const chip = screen.getByText('gpt-6-astra')
-assert.equal(chip.getAttribute('title'), '实际使用模型：openai/gpt-6-astra')
-ok("the child session's header shows the route beside its breadcrumb switcher")
+const chip = screen.getByText('openai/gpt-6-astra · high')
+assert.equal(chip.getAttribute('title'), '实际使用模型：openai/gpt-6-astra · high')
+ok("the child session's header shows the provider, model, and effort beside its breadcrumb switcher")
 cleanup()
 
 // Root sessions keep rendering nothing in this seat, exactly as shipped.

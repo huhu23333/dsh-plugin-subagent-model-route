@@ -5,17 +5,17 @@ English | [中文](README.zh.md)
 Annotate every subagent with the **model route it actually ran on**, in both places you look
 at a subagent: the parent's catalog list and the child session's own header.
 
-![Catalog rows: each row stacks the name, a mode/activity/model badge line, and the durable title](docs/effect-catalog-rows.png)
+![Catalog rows: each row stacks the name, a mode/activity/route badge line, and the durable title](docs/effect-catalog-rows.png)
 
-*The parent's catalog: thirteen subagents, each row stacking the name, a `mode · activity ·
-route` badge line, and the durable title below it. The routes shown (`gpt-5.6-sol`,
-`gpt-6-astra`, `qwen3-coder-flash`, `deepseek-flash`) are the ones those delegations actually
-ran on.*
+*The parent's catalog: fourteen subagents, each row stacking the name, a `mode · activity ·
+route` badge line, and the durable title below it. The badge spells out the whole route —
+`openai/gpt-5.6-sol · medium`, `openai/gpt-6-astra`, `qwen/qwen3-coder-flash`,
+`deepseek-official/deepseek-flash · high` — exactly as those delegations ran it.*
 
 ![Child session header: the model route renders beside the breadcrumb switcher](docs/effect-child-header.png)
 
-*Opening a child session: the route (`deepseek-flash`) sits beside the lineage breadcrumb, in
-the header, above the read-only one-shot composer notice.*
+*Opening a child session: the full route (`deepseek-official/deepseek-flash · high`) sits
+beside the lineage breadcrumb, in the header, above the read-only one-shot composer notice.*
 
 ## Effect
 
@@ -23,11 +23,14 @@ Two surfaces change, and nothing else:
 
 | surface | before | after |
 | --- | --- | --- |
-| Parent catalog row | `name`, then `title · one-shot · running` on one line | three lines: `name` / `one-shot` `running` `gpt-5.6-sol` / `title` |
-| Child session header | breadcrumb switcher only | breadcrumb switcher + the route |
+| Parent catalog row | `name`, then `title · one-shot · running` on one line | three lines: `name` / `one-shot` `running` `openai/gpt-5.6-sol · medium` / `title` |
+| Child session header | breadcrumb switcher only | breadcrumb switcher + `openai/gpt-5.6-sol · medium` |
 
-A row whose child never issued a request shows **no** badge. Hovering a badge gives the full
-`provider/model · reasoningEffort`, and the row's accessible name carries the route too.
+A row whose child never issued a request shows **no** badge. The badge spells out the whole
+route — `provider/model · reasoningEffort` — so the provider and the reasoning effort are
+readable without hovering; a route too long for the badge line wraps onto its own line instead
+of being clipped. The tooltip repeats the route under its label, and the row's accessible name
+carries it too.
 
 ## Effect, expressed as consequences
 
@@ -35,7 +38,8 @@ Worth reading before installing. This plugin deliberately **shadows shipped UI**
 a price:
 
 1. **Rows get taller.** 44px → 59px, so the dropdown, capped at
-   `min(560px, 100vh - 140px)`, now shows roughly 9 rows instead of 12 before it scrolls.
+   `min(560px, 100vh - 140px)`, now shows roughly 9 rows instead of 12 before it scrolls. A
+   route long enough to wrap the badge line pushes a row to 74px and shows fewer still.
 2. **You fork that region of the shipped UI.** The catalog contract marks this seat
    `replaceRisk: 'shadows-shipped-ui'`. Upstream improvements to those two occupants —
    including DeepSeek adding a model column themselves — **will not reach you**; you have to
@@ -112,10 +116,11 @@ host's own `react`/`react-dom`/`@deepseek-ai/*`, plus the monorepo's tooling), b
 `npm install` against the versions listed in `devDependencies` replaces it.
 
 ```bash
-npm run check      # typecheck -> build -> headless smoke (15 checks)
+npm run check      # typecheck -> build -> headless smoke (16 checks)
 npm run build      # tsdown: lib/index.js (host half) + lib/client/index.js (closure factory)
 npm run watch
 npm run smoke      # renders both seized seats under jsdom
+npm run preview    # writes preview.html: the same render, with the theme CSS, for a browser
 ```
 
 The out-of-tree build in [`tsdown.config.ts`](./tsdown.config.ts) restates the two contracts the

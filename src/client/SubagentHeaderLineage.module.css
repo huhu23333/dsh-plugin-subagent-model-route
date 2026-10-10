@@ -244,6 +244,9 @@
 .badges {
   display: inline-flex;
   flex: none;
+  /* A long `provider/model · effort` badge wraps to its own line instead of
+     being clipped: the badge line owns its width and the row grows for it. */
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   white-space: nowrap;
@@ -298,7 +301,9 @@
 .sessionModel {
   display: inline-block;
   flex: none;
-  max-width: 180px;
+  /* Wide enough for the whole `provider/model · effort` route: 180px clipped the
+     longer providers once the readout stopped being the bare model id. */
+  max-width: 360px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

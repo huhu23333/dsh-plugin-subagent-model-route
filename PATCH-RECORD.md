@@ -27,11 +27,11 @@
       title · 一次性 · 已完成              ← 长 title 会把后面的内容挤成省略号
 
 改后： 名称
-      一次性  已完成  gpt-5.6-sol          ← 徽标行
-      只输出一个词：CONTINUABLE-OK…         ← title 独占一行
+      一次性  已完成  openai/gpt-6-astra · high   ← 徽标行：mode · 活动状态 · provider/model · effort
+      只输出一个词：CONTINUABLE-OK…                 ← title 独占一行
 ```
 
-行高 44px → 59px；下拉菜单 `max-height: min(560px, 100vh-140px)` 可滚动。
+行高 44px → 59px；路由长到需要换行时该行变 74px；下拉菜单 `max-height: min(560px, 100vh-140px)` 可滚动。
 
 ### 2. 子代理会话页头：面包屑旁显示模型
 
@@ -51,8 +51,8 @@ usedModel(selection) = selection.lastUsed ?? selection.next
 
 | 文件 | 改动 |
 | --- | --- |
-| `src/client/SubagentHeaderLineage.tsx` | 新增 `SessionModelRef` 类型与 `usedModel()` / `modelRoute()` 纯函数；`CatalogRows` 计算路由、把模型写入 `aria-label`、把 mode/活动状态/模型渲染为徽标行、title 独占摘要行；`SubagentHeaderLineage` 增加同一读数 |
-| `src/client/SubagentHeaderLineage.module.css` | 新增 `.badges` / `.badge` / `.model`（代码字体 + 次级色）/ `.sessionModel`；`.label` 加 `flex: none; min-width: 0`；`.summary` 加 `min-height: 15px`（无 title 时也保住行高） |
+| `src/client/SubagentHeaderLineage.tsx` | 新增 `SessionModelRef` 类型与 `usedModel()` / `modelRoute()` 纯函数；`CatalogRows` 计算路由、把路由写入 `aria-label`、把 mode/活动状态/**`provider/model · effort`** 渲染为徽标行、title 独占摘要行；`SubagentHeaderLineage` 在同一位置渲染同一读数 |
+| `src/client/SubagentHeaderLineage.module.css` | 新增 `.badges`（`flex-wrap: wrap`，长路由整体换行而非被裁）/ `.badge` / `.model`（代码字体 + 次级色）/ `.sessionModel`；`.label` 加 `flex: none; min-width: 0`；`.summary` 加 `min-height: 15px`（无 title 时也保住行高） |
 | `src/client/locales.ts` | zh/en 各加一个键 `model.title`（`实际使用模型：{value}` / `Model used: {value}`） |
 
 ## 仅属于上游补丁的部分（插件不需要）

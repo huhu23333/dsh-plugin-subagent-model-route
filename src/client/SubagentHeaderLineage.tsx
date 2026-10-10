@@ -373,7 +373,7 @@ function CatalogRows({
                     <span className={css.badge}>{mode}</span>
                     <span className={css.badge}>{activity}</span>
                     {model !== undefined && (
-                      <span className={`${css.badge} ${css.model}`} title={modelTitle}>{model.model}</span>
+                      <span className={`${css.badge} ${css.model}`} title={modelTitle}>{modelRoute(model)}</span>
                     )}
                   </span>
                   <span className={css.summary}>{secondary}</span>
@@ -847,7 +847,7 @@ export function SubagentHeaderLineage({
         />
       )}
       {model !== undefined && (
-        <span className={css.sessionModel} title={modelTitle}>{model.model}</span>
+        <span className={css.sessionModel} title={modelTitle}>{modelRoute(model)}</span>
       )}
     </>
   )
