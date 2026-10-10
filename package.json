@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-subagent-model-route",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Annotate every subagent with the model route it actually ran on: a badge line in each parent-catalog row and a readout in a child session's own header.",
   "license": "MIT",
@@ -106,7 +106,9 @@
     "@deepseek-ai/dsh-client-ui-slots": { "optional": true },
     "@deepseek-ai/dsh-client-ui-workspace": { "optional": true },
     "@deepseek-ai/dsh-session": { "optional": true },
-    "@deepseek-ai/dsh-subagent": { "optional": true }
+    "@deepseek-ai/dsh-subagent": { "optional": true },
+    "react": { "optional": true },
+    "react-dom": { "optional": true }
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
